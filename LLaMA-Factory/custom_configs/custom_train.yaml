@@ -1,0 +1,34 @@
+### model
+model_name_or_path: THUDM/glm-4-9b
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_rank: 8
+lora_target: all
+lora_dropout: 0.05
+### dataset
+dataset: alpaca_en_demo
+template: glm4
+cutoff_len: 1024
+preprocessing_num_workers: 4
+
+### output
+output_dir: saves/glm-4-9b/lora/sft
+logging_steps: 10
+save_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+report_to: none
+
+### train
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 4
+learning_rate: 1e-4
+num_train_epochs: 3
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+fp16: true
+ddp_timeout: 180000000

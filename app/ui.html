@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>呓 v2.0</title>
+<style>
+/* ── Reset & Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0e; --sidebar:#101014; --card:#18181d; --card-hover:#1e1e24;
+  --border:rgba(255,255,255,0.06); --border-active:rgba(255,255,255,0.1);
+  --text:#e4e4e7; --text-secondary:#8b8b92; --text-muted:#5c5c63;
+  --accent:#00d4cc; --accent-dim:#00a69d; --accent-glow:rgba(0,212,204,0.15);
+  --red:#f44747; --green:#4caf93; --yellow:#e5c07b; --blue:#61afef;
+  --font:'Segoe UI',system-ui,-apple-system,sans-serif; --mono:'Cascadia Code','Fira Code',Consolas,monospace;
+  --radius:8px; --radius-sm:6px; --radius-lg:12px;
+  --transition:0.2s cubic-bezier(0.4,0,0.2,1);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;-webkit-font-smoothing:antialiased}
+
+/* ── Sidebar ── */
+nav{width:220px;min-width:220px;background:var(--sidebar);display:flex;flex-direction:column;border-right:1px solid var(--border);user-select:none;z-index:10}
+nav .logo{padding:20px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+nav .logo .icon{width:32px;height:32px;background:var(--accent);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:16px;color:#000;font-weight:700}
+nav .logo .text{font-size:15px;font-weight:600;letter-spacing:-0.2px}
+nav .logo .ver{font-size:11px;color:var(--text-muted);margin-left:auto}
+nav .nav-list{flex:1;padding:8px;overflow-y:auto}
+nav .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;color:var(--text-secondary);font-size:13px;font-weight:450;transition:all var(--transition);margin-bottom:2px;position:relative}
+nav .nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text)}
+nav .nav-item.active{background:var(--accent-glow);color:var(--accent);font-weight:500}
+nav .nav-item.active::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;background:var(--accent);border-radius:0 2px 2px 0}
+nav .nav-item svg{width:18px;height:18px;opacity:0.7;flex-shrink:0}
+nav .nav-item.active svg{opacity:1}
+nav .status-bar{padding:12px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted)}
+nav .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:6px}
+
+/* ── Main Content ── */
+main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+main header{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg);z-index:5}
+main header h1{font-size:18px;font-weight:600;letter-spacing:-0.3px}
+main header .actions{display:flex;gap:8px}
+main .content{flex:1;overflow-y:auto;padding:20px 28px}
+main .panel{display:none}
+main .panel.active{display:block}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border-active);background:var(--card);color:var(--text);transition:all var(--transition);font-family:var(--font);white-space:nowrap}
+.btn:hover{background:var(--card-hover);border-color:rgba(255,255,255,0.15)}
+.btn.accent{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.btn.accent:hover{background:var(--accent-dim);box-shadow:0 0 20px var(--accent-glow)}
+.btn.danger{color:var(--red);border-color:rgba(244,71,71,0.3)}
+.btn.danger:hover{background:rgba(244,71,71,0.1)}
+.btn.small{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px}
+.card h3{font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)}
+.card-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+
+/* ── Inputs ── */
+input,textarea,select{background:var(--sidebar);border:1px solid var(--border-active);border-radius:var(--radius-sm);color:var(--text);padding:8px 12px;font-size:13px;font-family:var(--font);transition:all var(--transition);outline:none;width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+input{height:36px}
+select{height:36px;cursor:pointer}
+textarea{resize:vertical;min-height:80px}
+label{font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;font-weight:500}
+.form-group{margin-bottom:12px}
+
+/* ── Table / Grid ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border)}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.status-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500}
+.status-badge::before{content:'';width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.status-badge.ok::before{background:var(--green)}
+.status-badge.error::before{background:var(--red)}
+.status-badge.warn::before{background:var(--yellow)}
+
+/* ── Progress ── */
+.progress-bar{height:6px;background:var(--sidebar);border-radius:3px;overflow:hidden;flex:1;min-width:100px}
+.progress-bar .fill{height:100%;border-radius:3px;transition:width 0.5s ease;background:var(--accent)}
+.progress-label{font-size:12px;color:var(--text-secondary);min-width:80px;text-align:right}
+
+/* ── Log / Console ── */
+.console{background:var(--sidebar);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-family:var(--mono);font-size:12px;line-height:1.6;overflow-y:auto;max-height:400px;white-space:pre-wrap;word-break:break-all;color:var(--text-secondary)}
+.console .time{color:var(--text-muted)}
+.console .ok{color:var(--green)}
+.console .err{color:var(--red)}
+.console .warn{color:var(--yellow)}
+
+/* ── Chat ── */
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 220px);min-height:420px}
+.chat-header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg) var(--radius-lg) 0 0;margin-bottom:0}
+.chat-header-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.chat-header-avatar.active{background:linear-gradient(135deg,var(--green),#2d8a6e);box-shadow:0 0 12px rgba(76,175,147,0.3)}
+.chat-header-avatar.idle{background:var(--sidebar);border:2px dashed var(--border-active)}
+.chat-header-info{flex:1;min-width:0}
+.chat-header-name{font-size:14px;font-weight:600;color:var(--text)}
+.chat-header-status{font-size:11px;margin-top:2px}
+.chat-header-status.online{color:var(--green)}
+.chat-header-status.offline{color:var(--text-muted)}
+.chat-header-status.generating{color:var(--yellow);animation:pulse 1.5s ease-in-out infinite}
+.chat-header-actions{display:flex;gap:6px}
+.chat-messages{flex:1;overflow-y:auto;padding:16px 20px;background:var(--bg);border-left:1px solid var(--border);border-right:1px solid var(--border)}
+.chat-msg{display:flex;gap:10px;margin-bottom:20px;animation:msgIn 0.3s ease}
+.chat-msg.system{justify-content:center}
+.chat-msg.system .bubble{background:transparent;color:var(--text-muted);font-size:12px;text-align:center;max-width:100%}
+.chat-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;font-weight:700}
+.chat-avatar.user{background:var(--blue);color:#fff}
+.chat-avatar.assistant{background:linear-gradient(135deg,var(--accent),#00897b);color:#000}
+.chat-avatar.system{display:none}
+.bubble{max-width:75%;padding:12px 16px;border-radius:18px;font-size:13px;line-height:1.65;white-space:pre-wrap;word-break:break-word;position:relative}
+.bubble.user{background:var(--blue);color:#fff;border-bottom-right-radius:6px;margin-left:auto}
+.bubble.assistant{background:var(--card);color:var(--text);border:1px solid var(--border-active);border-bottom-left-radius:6px}
+.bubble.system{background:transparent;color:var(--text-muted);border:none;font-size:11px}
+.chat-msg.user{flex-direction:row-reverse}
+.typing-indicator{display:flex;gap:4px;padding:14px 18px}
+.typing-indicator span{width:8px;height:8px;border-radius:50%;background:var(--text-muted);animation:typeBounce 1.4s ease-in-out infinite}
+.typing-indicator span:nth-child(2){animation-delay:0.2s}
+.typing-indicator span:nth-child(3){animation-delay:0.4s}
+.chat-input-row{display:flex;gap:8px;padding:12px 20px;background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius-lg) var(--radius-lg)}
+.chat-input-row textarea{flex:1;min-height:52px;max-height:120px;background:var(--sidebar);border:1px solid var(--border-active);border-radius:24px;padding:12px 18px;font-size:13px;resize:none}
+.chat-input-row textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.chat-input-row .btn-send{width:44px;height:44px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.chat-model-bar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--sidebar);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;font-size:12px;flex-wrap:wrap}
+.chat-model-bar select{width:auto;min-width:140px;height:30px;font-size:12px;padding:4px 8px}
+.chat-model-bar .divider{width:1px;height:18px;background:var(--border-active)}
+.chat-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center}
+.chat-empty-icon{font-size:56px;margin-bottom:16px;opacity:0.6}
+.chat-empty-title{font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px}
+.chat-empty-desc{font-size:13px;color:var(--text-muted);max-width:360px;line-height:1.6}
+@keyframes msgIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes typeBounce{0%,60%,100%{transform:translateY(0);opacity:0.4}30%{transform:translateY(-8px);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* ── Fine-tune Sections ── */
+.ft-section{margin-bottom:8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);overflow:hidden}
+.ft-section[open] .ft-summary{border-bottom:1px solid var(--border)}
+.ft-summary{cursor:pointer;padding:10px 16px;font-size:13px;font-weight:600;color:var(--text);background:var(--card-hover);user-select:none;list-style-position:outside}
+.ft-summary:hover{background:rgba(255,255,255,0.06)}
+.ft-section .grid-2{padding:12px 16px}
+/* ── Chat Gen Bar ── */
+.chat-gen-bar{display:flex;align-items:center;gap:4px;padding:8px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;font-size:11px;flex-wrap:wrap}
+.chat-gen-bar input,.chat-gen-bar select{background:var(--sidebar);border:1px solid var(--border-active);border-radius:4px;color:var(--text);padding:2px 4px;font-size:11px}
+.chat-gen-bar input:focus,.chat-gen-bar select:focus{border-color:var(--accent);outline:none}
+
+/* ── System stats ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px}
+.stat-card .label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.stat-card .value{font-size:24px;font-weight:700;letter-spacing:-1px;margin-bottom:4px}
+.stat-card .detail{font-size:12px;color:var(--text-secondary)}
+
+/* ── Grid helpers ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.flex-between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.gap-8{gap:8px}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.18)}
+
+/* ── Toasts ── */
+.toast-container{position:fixed;top:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;animation:slideIn 0.3s ease;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.toast.info{background:#1a3a4a;border:1px solid rgba(0,212,204,0.3);color:var(--accent)}
+.toast.error{background:#3a1a1a;border:1px solid rgba(244,71,71,0.3);color:var(--red)}
+.toast.success{background:#1a3a2a;border:1px solid rgba(76,175,147,0.3);color:var(--green)}
+@keyframes slideIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── Loading Spinner ── */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.1);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav>
+  <div class="logo">
+    <div class="icon">呓</div>
+    <div class="text">呓</div>
+    <span class="ver">v2.0</span>
+  </div>
+  <div class="nav-list">
+    <div class="nav-item active" data-panel="env"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>环境检测</div>
+    <div class="nav-item" data-panel="config"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>自动配置</div>
+    <div class="nav-item" data-panel="wechat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>微信工具</div>
+    <div class="nav-item" data-panel="convert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>聊天记录转换</div>
+    <div class="nav-item" data-panel="finetune"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>模型微调</div>
+    <div class="nav-item" data-panel="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>模型对话</div>
+    <div class="nav-item" data-panel="system"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>系统状态</div>
+    <div class="nav-item" data-panel="logs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>日志查看</div>
+  </div>
+  <div class="status-bar"><span class="status-dot" id="statusDot"></span><span id="statusText">就绪</span></div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<main>
+  <header>
+    <h1 id="panelTitle">环境检测</h1>
+    <div class="actions" id="panelActions"></div>
+  </header>
+  <div class="content" id="panelContent"></div>
+</main>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const API = '/api';
+let currentPanel = 'env';
+let eventSource = null;
+let trainingRunning = false;
+let panelState = {};  // per-panel form values & DOM content cache
+let panelFirstRender = {};  // track if panel has been rendered at least once
+let _renderToken = 0;  // cancel stale async renders on rapid tab switches
+
+// ── Navigation ──
+document.querySelectorAll('.nav-item').forEach(n => {
+  n.addEventListener('click', () => switchPanel(n.dataset.panel));
+});
+
+function switchPanel(id) {
+  savePanelState(currentPanel);
+  currentPanel = id;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.panel === id));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`.nav-item[data-panel="${id}"]`).classList.add('active');
+  renderPanel(id);
+}
+
+function savePanelState(id) {
+  if (!id) return;
+  const content = document.getElementById('panelContent');
+  if (!content) return;
+  const state = { inputs: {}, selects: {}, textareas: {}, elements: {} };
+
+  // Save all input values
+  content.querySelectorAll('input').forEach(el => {
+    if (el.id) state.inputs[el.id] = { value: el.value, type: el.type };
+    else if (el.placeholder) {
+      // Try to identify by placeholder
+      const key = 'input_' + el.placeholder.replace(/[^a-zA-Z0-9一-鿿]/g, '_').substring(0, 30);
+      state.inputs[key] = { value: el.value, type: el.type, placeholder: el.placeholder };
+    }
+  });
+  // Save select values
+  content.querySelectorAll('select').forEach(el => {
+    if (el.id) state.selects[el.id] = el.value;
+  });
+  // Save textarea values
+  content.querySelectorAll('textarea').forEach(el => {
+    if (el.id) state.textareas[el.id] = el.value;
+  });
+  // Save key element content (logs, previews, hardware info, etc.)
+  const keyEls = ['ftLog', 'ftHardwareCard', 'ftHardwareInfo', 'envTable',
+                  'configLog', 'convertPreview', 'wechatStatusDetail', 'logContent'];
+  // Note: chatMessages is NOT saved — always rebuilt from chatHistory via addChatBubble
+  keyEls.forEach(kid => {
+    const el = document.getElementById(kid);
+    if (el) {
+      state.elements[kid] = {
+        innerHTML: el.innerHTML,
+        textContent: el.textContent,
+        style_display: el.style.display || '',
+        className: el.className || '',
+      };
+    }
+  });
+  // Save running badge
+  const badge = document.getElementById('ftRunningBadge');
+  if (badge) {
+    state.elements['ftRunningBadge'] = {
+      style_display: badge.style.display || '',
+      className: badge.className || '',
+      textContent: badge.textContent || '',
+    };
+  }
+  panelState[id] = state;
+}
+
+function restorePanelState(id) {
+  const state = panelState[id];
+  if (!state) return;
+  const content = document.getElementById('panelContent');
+  if (!content) return;
+
+  // Restore input values
+  for (const [kid, info] of Object.entries(state.inputs)) {
+    const el = document.getElementById(kid);
+    if (el) {
+      el.value = info.value;
+    } else if (info.placeholder) {
+      // Find by placeholder
+      const inputs = content.querySelectorAll('input');
+      inputs.forEach(inp => {
+        if (inp.placeholder === info.placeholder && !inp.id) {
+          inp.value = info.value;
+        }
+      });
+    }
+  }
+  // Restore select values
+  for (const [kid, val] of Object.entries(state.selects)) {
+    const el = document.getElementById(kid);
+    if (el) {
+      // Check if the option still exists
+      const opts = el.querySelectorAll('option');
+      let found = false;
+      opts.forEach(o => { if (o.value === val) found = true; });
+      if (found) el.value = val;
+    }
+  }
+  // Restore textarea values
+  for (const [kid, val] of Object.entries(state.textareas)) {
+    const el = document.getElementById(kid);
+    if (el) el.value = val;
+  }
+  // Restore element content
+  for (const [kid, info] of Object.entries(state.elements)) {
+    const el = document.getElementById(kid);
+    if (el) {
+      if (info.innerHTML !== undefined) el.innerHTML = info.innerHTML;
+      if (info.style_display) el.style.display = info.style_display;
+      if (info.className) el.className = info.className;
+      if (info.textContent && kid === 'ftRunningBadge') el.textContent = info.textContent;
+    }
+  }
+  // Panel-specific: re-show convert file info
+  if (id === 'convert' && convertFileName) {
+    const fileInfoEl = content.querySelector('#convertFile');
+    if (fileInfoEl) fileInfoEl.value = convertFileName;
+  }
+  // Panel-specific: rebuild chat messages from chatHistory using new bubble style
+  if (id === 'chat' && chatHistory.length > 0) {
+    const msgsEl = document.getElementById('chatMessages');
+    if (msgsEl) {
+      msgsEl.innerHTML = '';
+      chatHistory.forEach(msg => {
+        addChatBubble(msg.role, msg.role === 'user' ? '我' : '呓', msg.content);
+      });
+    }
+  }
+  // Panel-specific: restore training button states
+  if (id === 'finetune' && trainingRunning) {
+    const preBtn = document.getElementById('ftPreprocessBtn');
+    const startBtn = document.getElementById('ftStartBtn');
+    const stopBtn = document.getElementById('ftStopBtn');
+    if (preBtn) preBtn.disabled = true;
+    if (startBtn) startBtn.disabled = true;
+    if (stopBtn) stopBtn.disabled = false;
+  }
+}
+
+// ── Panel titles ──
+const panelTitles = {
+  env:'环境检测', config:'自动配置', wechat:'微信工具', convert:'聊天记录转换',
+  finetune:'模型微调', chat:'模型对话', system:'系统状态', logs:'日志查看'
+};
+
+async function renderPanel(id) {
+  const token = ++_renderToken;
+  document.getElementById('panelTitle').textContent = panelTitles[id];
+  const content = document.getElementById('panelContent');
+  const actions = document.getElementById('panelActions');
+  actions.innerHTML = '';
+  try {
+    switch(id) {
+      case 'env': await renderEnv(content, actions); break;
+      case 'config': await renderConfig(content, actions); break;
+      case 'wechat': await renderWechat(content, actions); break;
+      case 'convert': await renderConvert(content, actions); break;
+      case 'finetune': await renderFinetune(content, actions); break;
+      case 'chat': await renderChat(content, actions); break;
+      case 'system': await renderSystem(content, actions); break;
+      case 'logs': await renderLogs(content, actions); break;
+    }
+  } catch(e) {
+    console.error('renderPanel error:', id, e);
+  }
+  // Discard if another renderPanel call started after this one
+  if (token !== _renderToken) return;
+  restorePanelState(id);
+  panelFirstRender[id] = true;
+}
+
+// Refresh current panel while preserving state (for in-panel actions)
+async function refreshCurrentPanel() {
+  savePanelState(currentPanel);
+  await renderPanel(currentPanel);
+}
+
+// ── Toast ──
+function toast(msg, type='info') {
+  const container = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+// ── API helpers ──
+async function apiGet(path) {
+  const r = await fetch(API + path);
+  return r.json();
+}
+async function apiPost(path, data={}) {
+  const r = await fetch(API + path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  return r.json();
+}
+
+// ═══════════════════════════════════════════
+// PANEL: 环境检测
+// ═══════════════════════════════════════════
+async function renderEnv(content, actions) {
+  content.innerHTML = `
+    <div class="card">
+      <div class="flex-between">
+        <h3>组件检测结果</h3>
+        <div class="flex-between gap-8">
+          <span class="spinner" id="envSpinner" style="display:none"></span>
+        </div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>组件</th><th>状态</th><th>详情</th></tr></thead>
+      <tbody id="envTable"><tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:32px">点击「开始检测」扫描环境</td></tr></tbody></table></div>
+    </div>`;
+  actions.innerHTML = `<button class="btn accent" onclick="runEnvCheck()">开始检测</button>`;
+}
+
+async function runEnvCheck() {
+  document.getElementById('envSpinner').style.display = 'inline-block';
+  setStatus('检测中...');
+  try {
+    const data = await apiGet('/env-check');
+    const tbody = document.getElementById('envTable');
+    tbody.innerHTML = data.results.map(r => `
+      <tr><td>${esc(r.name)}</td>
+      <td><span class="status-badge ${r.status==='ok'?'ok':'error'}">${r.status==='ok'?'正常':'异常'}</span></td>
+      <td>${esc(r.detail)}</td></tr>`).join('');
+    setStatus('环境检测完成');
+  } catch(e) { toast('检测失败: '+e.message, 'error'); }
+  document.getElementById('envSpinner').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════
+// PANEL: 自动配置
+// ═══════════════════════════════════════════
+function renderConfig(content, actions) {
+  content.innerHTML = `<div class="card"><div class="console" id="configLog" style="min-height:300px">点击操作按钮开始配置...</div></div>`;
+  actions.innerHTML = `
+    <button class="btn accent" onclick="runConfig('full')">一键配置全部</button>
+    <button class="btn" onclick="runConfig('copy')">仅复制文件</button>
+    <button class="btn" onclick="runConfig('deps')">仅安装依赖</button>`;
+}
+
+async function runConfig(action) {
+  const log = document.getElementById('configLog');
+  log.textContent = '运行中...\n';
+  setStatus('配置运行中...');
+  let data;
+  if (action === 'full') data = await apiPost('/config/full');
+  else if (action === 'copy') data = await apiPost('/config/copy');
+  else if (action === 'deps') data = await apiPost('/config/deps');
+  if (data.log) {
+    log.textContent = data.log.join('\n');
+    log.scrollTop = log.scrollHeight;
+  }
+  setStatus('配置完成');
+  toast('操作完成', 'success');
+}
+
+// ═══════════════════════════════════════════
+// PANEL: 微信工具
+// ═══════════════════════════════════════════
+async function renderWechat(content, actions) {
+  let status = {wechat_running:false, wechat_data:false, wechat_data_paths:[],
+    memotrace_exists:false, memotrace_path:'', memotrace_size_mb:0, usb_root:'', status_text:''};
+  try { status = await apiGet('/wechat/status'); } catch(e) {}
+  content.innerHTML = `
+    <div class="card"><h3>MemoTrace 信息</h3>
+      <div class="form-group"><label>MemoTrace 路径</label><input readonly value="${esc(status.memotrace_path)}"></div>
+      <div class="form-group"><label>文件存在</label><input readonly value="${status.memotrace_exists ? '是 (' + status.memotrace_size_mb + ' MB)' : '否 — 文件不存在'}"></div>
+      <div class="form-group"><label>USB 根目录</label><input readonly value="${esc(status.usb_root)}"></div>
+    </div>
+    <div class="card"><h3>微信状态</h3>
+      <div class="flex-between gap-8" style="margin-bottom:8px">
+        <span class="status-badge ${status.wechat_running?'ok':'error'}">微信进程: ${status.wechat_running?'运行中':'未运行'}</span>
+        <span class="status-badge ${status.wechat_data?'ok':'error'}">微信数据: ${status.wechat_data?'已找到':'未找到'}</span>
+        <span class="status-badge ${status.memotrace_exists?'ok':'error'}">MemoTrace: ${status.memotrace_exists?'已找到':'不存在'}</span>
+      </div>
+      ${status.wechat_data_paths && status.wechat_data_paths.length ? '<div class="form-group"><label>微信数据路径</label><input readonly value="' + esc(status.wechat_data_paths.join('; ')) + '"></div>' : ''}
+      <div id="wechatStatusDetail" style="font-size:13px;color:var(--text-secondary);margin-top:8px">${esc(status.status_text)}</div>
+    </div>`;
+  actions.innerHTML = `
+    <button class="btn accent" onclick="launchMemoTrace()">启动 MemoTrace (管理员)</button>
+    <button class="btn" onclick="checkWechatStatus()">检查微信状态</button>
+    <button class="btn" onclick="checkMemotrace()">检查 MemoTrace</button>`;
+}
+
+async function launchMemoTrace() {
+  const data = await apiPost('/wechat/launch-memotrace');
+  if (data.error) { toast(data.error, 'error'); return; }
+  toast(data.message || 'MemoTrace 已启动 (' + (data.mode||'') + ')', 'success');
+}
+
+async function checkWechatStatus() {
+  const data = await apiGet('/wechat/status');
+  const el = document.getElementById('wechatStatusDetail');
+  if (el) el.textContent = data.status_text || '';
+  toast(data.status_text || '检查完成', 'info');
+}
+
+async function checkMemotrace() {
+  const data = await apiGet('/wechat/status');
+  const msg = data.memotrace_exists
+    ? `MemoTrace 已找到: ${data.memotrace_path} (${data.memotrace_size_mb} MB)`
+    : `MemoTrace 不存在: ${data.memotrace_path}`;
+  toast(msg, data.memotrace_exists ? 'success' : 'error');
+}
+
+// ═══════════════════════════════════════════
+// PANEL: 聊天记录转换
+// ═══════════════════════════════════════════
+let convertFileContent = null;
+let convertFileName = '';
+let manualQAPairs = [];  // parsed from pasted text
+
+async function renderConvert(content, actions) {
+  // Fetch available datasets
+  let dsList = ['custom_train'];
+  try {
+    const ds = await apiGet('/finetune/datasets');
+    dsList = ds.datasets || ['custom_train'];
+  } catch(e) {}
+
+  content.innerHTML = `
+    <div class="card"><h3>输入文件</h3>
+      <div class="flex-between gap-8">
+        <input id="convertFile" placeholder="选择聊天记录文件 (.txt) 或输入路径" style="flex:1" readonly>
+        <input type="file" id="convertFileInput" accept=".txt" style="display:none" onchange="handleConvertFile(this)">
+        <button class="btn" onclick="document.getElementById('convertFileInput').click()">浏览...</button>
+      </div>
+      ${convertFileName ? `<div style="margin-top:6px;font-size:12px;color:var(--accent)">已加载: ${esc(convertFileName)} (${(convertFileContent||'').length} 字符)</div>` : ''}
+    </div>
+    <div class="card"><h3>选项</h3>
+      <div class="grid-2">
+        <div class="form-group"><label>发送者名称</label><div class="flex-between gap-8"><input id="convertSender" placeholder="发送者" style="flex:1"><button class="btn small" onclick="detectSender()">自动检测</button></div></div>
+        <div class="form-group"><label>保存到数据集</label><div class="flex-between gap-8"><select id="convertDataset" style="flex:1">${dsList.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('')}</select><button class="btn small" onclick="createNewDataset()">+ 新建</button></div></div>
+      </div>
+      <div class="form-group" style="margin-top:8px"><label>人设 (System Prompt)</label><textarea id="convertPersona" style="min-height:80px">你是一个友好的AI助手。</textarea></div>
+    </div>
+    <div class="card"><h3>预览</h3><div class="console" id="convertPreview" style="min-height:180px">选择文件后点击「预览」查看转换结果</div></div>
+    <div class="card"><h3>手动添加问答对 <span style="font-size:12px;color:var(--text-muted);font-weight:400">（可选，粘贴 user:/assistant: 格式文本，将合并到训练数据中）</span></h3>
+      <textarea id="qaRawText" style="min-height:160px;font-family:var(--mono);font-size:12px" placeholder="粘贴格式：&#10;user: 问题或对话内容&#10;assistant: 回答内容&#10;user: 下一轮问题&#10;assistant: 下一轮回答&#10;&#10;支持多轮对话，自动解析"></textarea>
+      <div style="margin-top:6px;font-size:12px;color:var(--text-secondary)" id="qaParseHint"></div>
+    </div>`;
+  actions.innerHTML = `
+    <button class="btn accent" onclick="previewConvert()">预览</button>
+    <button class="btn accent" onclick="runConvert()">转换并保存</button>
+    <button class="btn" onclick="analyzeCutoff()">检测最优序列长度</button>`;
+}
+
+function handleConvertFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  convertFileName = file.name;
+  document.getElementById('convertFile').value = file.name;
+  const reader = new FileReader();
+  reader.onload = () => {
+    convertFileContent = reader.result;
+    refreshCurrentPanel();
+    detectSender();
+  };
+  reader.readAsText(file);
+}
+
+async function createNewDataset() {
+  const name = prompt('输入新数据集名称（不含 .json 后缀）:');
+  if (!name || !name.trim()) return;
+  const sel = document.getElementById('convertDataset');
+  if (sel) {
+    const opt = document.createElement('option');
+    opt.value = name.trim();
+    opt.textContent = name.trim();
+    sel.appendChild(opt);
+    sel.value = name.trim();
+  }
+  toast(`数据集 "${name.trim()}" 已创建 (保存时生效)`, 'info');
+}
+
+async function detectSender() {
+  const fp = document.getElementById('convertFile').value;
+  const params = {};
+  if (convertFileContent) { params.file_content = btoa(unescape(encodeURIComponent(convertFileContent))); }
+  else if (fp) { params.filepath = fp; }
+  else { toast('请先选择文件或输入路径', 'error'); return; }
+  const data = await apiPost('/convert/detect-sender', params);
+  if (data.sender) { document.getElementById('convertSender').value = data.sender; toast(`检测到发送者: ${data.sender}`, 'info'); }
+  else if (data.error) toast(data.error, 'error');
+}
+
+function parseQAText(raw) {
+  // Parse "user: ... assistant: ..." format, case-insensitive
+  const pairs = [];
+  const lines = raw.split(/\n/);
+  let currentRole = null;
+  let currentContent = [];
+  for (const line of lines) {
+    const m = line.match(/^(user|assistant)\s*[：:]\s*(.*)$/i);
+    if (m) {
+      if (currentRole && currentContent.length > 0) {
+        const text = currentContent.join('\n').trim();
+        if (currentRole === 'user') {
+          pairs.push({question: text, answer: ''});
+        } else if (pairs.length > 0 && !pairs[pairs.length - 1].answer) {
+          pairs[pairs.length - 1].answer = text;
+        }
+      }
+      currentRole = m[1].toLowerCase();
+      currentContent = [m[2]];
+    } else if (currentRole && line.trim()) {
+      currentContent.push(line.trim());
+    }
+  }
+  // Flush last segment
+  if (currentRole && currentContent.length > 0) {
+    const text = currentContent.join('\n').trim();
+    if (currentRole === 'user') {
+      pairs.push({question: text, answer: ''});
+    } else if (pairs.length > 0 && !pairs[pairs.length - 1].answer) {
+      pairs[pairs.length - 1].answer = text;
+    }
+  }
+  return pairs;
+}
+
+function updateQAHint() {
+  const raw = document.getElementById('qaRawText').value;
+  const pairs = parseQAText(raw);
+  manualQAPairs = pairs;
+  const hint = document.getElementById('qaParseHint');
+  if (pairs.length === 0) {
+    hint.textContent = raw.trim() ? '未识别到有效的 user:/assistant: 格式' : '';
+  } else {
+    hint.textContent = `已识别 ${pairs.length} 轮问答对`;
+    hint.style.color = 'var(--green)';
+    return;
+  }
+  hint.style.color = 'var(--text-muted)';
+}
+
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.id === 'qaRawText') updateQAHint();
+});
+
+async function previewConvert() {
+  const params = {sender:document.getElementById('convertSender').value, persona:document.getElementById('convertPersona').value};
+  if (convertFileContent) { params.file_content = btoa(unescape(encodeURIComponent(convertFileContent))); }
+  else { params.filepath = document.getElementById('convertFile').value; }
+  const data = await apiPost('/convert/preview', params);
+  const prev = document.getElementById('convertPreview');
+  if (data.error) { prev.textContent = 'Error: ' + data.error; return; }
+  prev.textContent = `📊 共 ${data.total_messages} 条消息 → ${data.total_conversations} 个对话 → ${data.total_training_samples} 个训练样本\n\n` +
+    (data.preview||[]).map(p => `── 对话 ${p.index} ──\n` + (p.messages||[]).map(m => `  [${m.role}] ${(m.content||'').substring(0,150)}${(m.content||'').length>150?'...':''}`).join('\n')).join('\n\n');
+}
+
+async function analyzeCutoff() {
+  const params = {
+    sender: document.getElementById('convertSender').value,
+    persona: document.getElementById('convertPersona').value,
+  };
+  if (convertFileContent) { params.file_content = btoa(unescape(encodeURIComponent(convertFileContent))); }
+  else { params.filepath = document.getElementById('convertFile').value; }
+  // Include manual QA pairs
+  const raw = document.getElementById('qaRawText').value;
+  if (raw.trim()) {
+    const pairs = parseQAText(raw);
+    const valid = pairs.filter(p => p.question.trim() && p.answer.trim());
+    if (valid.length > 0) params.manual_pairs = JSON.stringify(valid);
+  }
+  if (!params.file_content && !params.filepath) {
+    toast('请先选择聊天记录文件', 'error');
+    return;
+  }
+  document.getElementById('convertPreview').textContent = '正在分析 token 长度分布...\n';
+  setStatus('分析中...');
+  const data = await apiPost('/convert/analyze-cutoff', params);
+  if (data.error) {
+    document.getElementById('convertPreview').textContent = '分析失败: ' + data.error;
+    toast('分析失败', 'error');
+    return;
+  }
+  const a = data.analysis;
+  document.getElementById('convertPreview').textContent =
+    `📊 Token 长度分析 (${a.samples} 个训练样本)\n\n` +
+    `分布:\n` +
+    `  最小: ${a.min} tokens\n` +
+    `  中位: ${a.p50} tokens\n` +
+    `  P80:  ${a.p80} tokens\n` +
+    `  P90:  ${a.p90} tokens\n` +
+    `  P95:  ${a.p95} tokens\n` +
+    `  最大: ${a.max} tokens\n\n` +
+    `✅ 推荐 cutoff_len = ${a.recommended}\n` +
+    `   ${a.reason}\n\n` +
+    `提示: 低于推荐值会截断长样本，高于推荐值浪费显存。`;
+  toast(`推荐 cutoff_len = ${a.recommended}`, 'success');
+  setStatus('分析完成');
+}
+
+async function runConvert() {
+  // Collect manual QA pairs (non-empty only)
+  const validPairs = manualQAPairs.filter(p => p.question.trim() && p.answer.trim());
+  const params = {
+    sender: document.getElementById('convertSender').value,
+    persona: document.getElementById('convertPersona').value,
+    dataset: document.getElementById('convertDataset').value,
+    manual_pairs: validPairs.length > 0 ? JSON.stringify(validPairs) : '',
+  };
+  if (convertFileContent) { params.file_content = btoa(unescape(encodeURIComponent(convertFileContent))); }
+  else { params.filepath = document.getElementById('convertFile').value; }
+  setStatus('转换中...');
+  const data = await apiPost('/convert/run', params);
+  if (data.error) { toast(data.error, 'error'); setStatus('转换失败'); return; }
+  const extra = data.manual_count ? ` + ${data.manual_count} 手动问答对` : '';
+  document.getElementById('convertPreview').textContent += `\n\n✅ 转换完成! ${data.count} 个训练样本${extra}\n数据集: ${data.dataset_name}\n保存到: ${data.output}\n处理了 ${data.messages_processed} 条消息, 生成 ${data.conversations_found} 个对话`;
+  toast(`转换完成: ${data.count} 个样本${extra} → ${data.dataset_name}`, 'success');
+  setStatus('转换完成');
+  // Clear manual QA text after successful save
+  document.getElementById('qaRawText').value = '';
+  manualQAPairs = [];
+  document.getElementById('qaParseHint').textContent = '';
+  // Refresh dataset lists in other panels
+  if (typeof refreshFinetuneData === 'function') refreshFinetuneData();
+}
+
+// ═══════════════════════════════════════════
+// PANEL: 模型微调
+// ═══════════════════════════════════════════
+async function refreshFinetuneData() {
+  let ds = {datasets:[], model_path:'', existing_outputs:[]};
+  try { ds = await apiGet('/finetune/datasets'); } catch(e) {}
+  const sel = document.getElementById('ftDataset');
+  if (sel) {
+    sel.innerHTML = (ds.datasets||['custom_train']).map(d => `<option>${d}</option>`).join('');
+    if (ds.datasets && ds.datasets.length > 0) sel.value = ds.datasets[0];
+  }
+  return ds;
+}
+
+function _ftOpts(os,id,defVal){return os.map(o=>`<option value="${o}" ${o===defVal?'selected':''}>${o}</option>`).join('');}
+function _ftInp(id,label,defVal,type,opts,extra){type=type||'text';let a=`<div class="form-group"><label>${label}</label>`;if(type==='select'){a+=`<select id="${id}">${_ftOpts(opts||[],id,defVal)}</select>`;}else if(type==='bool'){a+=`<select id="${id}"><option value="true" ${defVal===true||defVal==='True'?'selected':''}>True</option><option value="false" ${defVal===false||defVal==='False'?'selected':''}>False</option></select>`;}else{a+=`<input id="${id}" value="${esc(String(defVal))}" type="${type}" ${extra||''}>`;}a+='</div>';return a;}
+
+async function renderFinetune(content, actions) {
+  const ds = await refreshFinetuneData() || {datasets:[], model_path:'', existing_outputs:[]};
+  content.innerHTML = `
+    <details class="ft-section" open><summary class="ft-summary">基础配置</summary><div class="grid-2">
+      ${_ftInp('ftModel','模型路径',ds.model_path||'','text',null,'style="flex:1"')}
+      <div class="form-group"><label>数据集</label><select id="ftDataset">${(ds.datasets||['custom_train']).map(d=>`<option>${d}</option>`).join('')}</select></div>
+      ${_ftInp('ftOutput','输出目录名','custom_lora')}
+      ${_ftInp('ftTemplate','对话模板','glm4','select',['glm4','default','qwen','qwen3','llama3','baichuan2','chatglm3','yi','mistral','gemma'])}
+      ${_ftInp('ftStage','训练阶段','sft','select',['sft','dpo','rm','ppo','kto','pt'])}
+      ${_ftInp('ftFinetuningType','微调方式','lora','select',['lora','freeze','full','oft'])}
+      ${_ftInp('ftValSize','验证集比例','0','number','','min="0" max="0.2" step="0.01"')}
+    </div></details>
+    <details class="ft-section"><summary class="ft-summary">LoRA 配置</summary><div class="grid-2">
+      ${_ftInp('ftRank','LoRA Rank','8','number','','min="1" max="256"')}
+      ${_ftInp('ftAlpha','LoRA Alpha','16','number','','min="1" max="512"')}
+      ${_ftInp('ftLoraDropout','LoRA Dropout','0.0','number','','min="0" max="0.5" step="0.01"')}
+      ${_ftInp('ftLoraTarget','LoRA Target','all','select',['all','q_proj,v_proj','q_proj,k_proj,v_proj,o_proj','q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj'])}
+      ${_ftInp('ftUseDora','使用 DoRA',false,'bool')}
+      ${_ftInp('ftUseRSLora','使用 RSLoRA',false,'bool')}
+      ${_ftInp('ftAdditionalTarget','额外训练模块','','text','','placeholder="可选, 逗号分隔"')}
+    </div></details>
+    <details class="ft-section"><summary class="ft-summary">训练超参</summary><div class="grid-2">
+      ${_ftInp('ftEpochs','训练轮数','3','number','','min="1" max="100"')}
+      ${_ftInp('ftBatch','批次大小','1','number','','min="1" max="64"')}
+      ${_ftInp('ftGradAccum','梯度累积步数','8','number','','min="1" max="64"')}
+      ${_ftInp('ftLR','学习率','1e-4')}
+      ${_ftInp('ftCutoffLen','序列长度 (cutoff_len)','512','number','','min="128" max="8192" step="128"')}
+      ${_ftInp('ftLRScheduler','学习率调度器','cosine','select',['cosine','linear','constant','constant_with_warmup','polynomial','inverse_sqrt'])}
+      ${_ftInp('ftWarmup','预热比例','0.05','number','','min="0" max="0.5" step="0.01"')}
+      ${_ftInp('ftMaxGradNorm','最大梯度范数','1.0','number','','min="0" max="10" step="0.1"')}
+      ${_ftInp('ftWeightDecay','权重衰减','0.0','number','','min="0" max="1" step="0.001"')}
+      ${_ftInp('ftMaxSteps','最大训练步数','-1','number','','min="-1" placeholder="-1=由epochs决定"')}
+      ${_ftInp('ftSeed','随机种子','42','number','','min="0" max="99999"')}
+    </div></details>
+    <details class="ft-section"><summary class="ft-summary">优化与量化</summary><div class="grid-2">
+      ${_ftInp('ftQuant','量化位数','4','select',['none','4','8'])}
+      ${_ftInp('ftDoubleQuant','双重量化',false,'bool')}
+      ${_ftInp('ftFlashAttn','Flash Attention','auto','select',['auto','fa2','fa3','sdpa','disabled'])}
+      ${_ftInp('ftBf16','使用 bf16',true,'bool')}
+      ${_ftInp('ftLiger','Liger Kernel',false,'bool')}
+      ${_ftInp('ftOptim','优化器','adamw_torch','select',['adamw_torch','adamw_8bit','paged_adamw_8bit','adafactor','sgd'])}
+    </div></details>
+    <details class="ft-section"><summary class="ft-summary">高级设置</summary><div class="grid-2">
+      ${_ftInp('ftLogSteps','日志步数','20','number','','min="1" max="10000"')}
+      ${_ftInp('ftSaveSteps','保存步数','200','number','','min="1" max="10000"')}
+      ${_ftInp('ftSaveLimit','最多保存数','3','number','','min="0" max="100"')}
+      ${_ftInp('ftOverwriteOutput','覆盖输出目录',true,'bool')}
+      ${_ftInp('ftOverwriteCache','覆盖缓存',false,'bool')}
+      ${_ftInp('ftPreprocessWorkers','预处理进程数','4','number','','min="1" max="64"')}
+      ${_ftInp('ftResume','断点续训路径','','text','','placeholder="留空=从头训练"')}
+    </div></details>
+    <div class="card" id="ftHardwareCard" style="display:none"><h3>硬件检测 & 推荐配置</h3><div id="ftHardwareInfo" style="font-size:13px;color:var(--text-secondary)"></div></div>
+    ${ds.existing_outputs && ds.existing_outputs.length > 0 ? `<div class="card"><h3>已有输出</h3><div style="font-size:12px;color:var(--text-secondary)">${ds.existing_outputs.map(o=>esc(o.name)+(o.has_checkpoint?' ✓':'')).join(', ')}</div></div>` : ''}
+    <div class="card"><h3>训练日志</h3>
+      <div class="flex-between gap-8" style="margin-bottom:8px">
+        <span class="status-badge" id="ftRunningBadge" style="display:none">训练运行中</span>
+      </div>
+      <div class="console" id="ftLog" style="min-height:250px">就绪 — 可使用「自动检测配置」获取推荐参数，然后点击「开始训练」</div></div>`;
+  actions.innerHTML = `
+    <button class="btn" onclick="autoDetectConfig()">自动检测配置</button>
+    <button class="btn" onclick="genFtConfig()">生成配置</button>
+    <button class="btn" onclick="preprocessData()" id="ftPreprocessBtn">预处理数据</button>
+    <button class="btn accent" id="ftStartBtn" onclick="startTraining()">开始训练</button>
+    <button class="btn danger" id="ftStopBtn" onclick="stopTraining()" disabled>停止训练</button>`;
+  try {
+    const st = await apiGet('/finetune/status');
+    if (st.running) {
+      trainingRunning = true;
+      const els = ['ftPreprocessBtn','ftStartBtn','ftStopBtn','ftRunningBadge'];
+      document.getElementById('ftPreprocessBtn').disabled = true;
+      document.getElementById('ftStartBtn').disabled = true;
+      document.getElementById('ftStopBtn').disabled = false;
+      document.getElementById('ftRunningBadge').style.display = 'inline-flex';
+      document.getElementById('ftRunningBadge').className = 'status-badge ok';
+      document.getElementById('ftRunningBadge').textContent = '训练运行中';
+      (st.recent_logs||[]).forEach(l => { document.getElementById('ftLog').textContent += l + '\n'; });
+    }
+  } catch(e) {}
+  if (!panelFirstRender['finetune']) {
+    try { autoDetectConfig(true); } catch(e) {}
+  }
+}
+
+function _elVal(id){const e=document.getElementById(id);return e?e.value:'';}
+function ftParams() {
+  return {
+    model_path:_elVal('ftModel'), dataset:_elVal('ftDataset'), output_name:_elVal('ftOutput'),
+    template:_elVal('ftTemplate'), stage:_elVal('ftStage'), finetuning_type:_elVal('ftFinetuningType'),
+    epochs:_elVal('ftEpochs'), batch_size:_elVal('ftBatch'), gradient_accumulation:_elVal('ftGradAccum'),
+    learning_rate:_elVal('ftLR'), cutoff_len:_elVal('ftCutoffLen'), lr_scheduler:_elVal('ftLRScheduler'),
+    warmup_ratio:_elVal('ftWarmup'), max_grad_norm:_elVal('ftMaxGradNorm'), weight_decay:_elVal('ftWeightDecay'),
+    max_steps:_elVal('ftMaxSteps'), seed:_elVal('ftSeed'), val_size:_elVal('ftValSize'),
+    lora_rank:_elVal('ftRank'), lora_alpha:_elVal('ftAlpha'), lora_dropout:_elVal('ftLoraDropout'),
+    lora_target:_elVal('ftLoraTarget'), use_dora:_elVal('ftUseDora'), use_rslora:_elVal('ftUseRSLora'),
+    additional_target:_elVal('ftAdditionalTarget'),
+    quantization_bit:_elVal('ftQuant'), double_quantization:_elVal('ftDoubleQuant'),
+    flash_attn:_elVal('ftFlashAttn'), bf16:_elVal('ftBf16'), enable_liger_kernel:_elVal('ftLiger'), optim:_elVal('ftOptim'),
+    logging_steps:_elVal('ftLogSteps'), save_steps:_elVal('ftSaveSteps'), save_total_limit:_elVal('ftSaveLimit'),
+    overwrite_output_dir:_elVal('ftOverwriteOutput'), overwrite_cache:_elVal('ftOverwriteCache'),
+    preprocessing_num_workers:_elVal('ftPreprocessWorkers'), resume_from_checkpoint:_elVal('ftResume'),
+  };
+}
+
+async function autoDetectConfig(silent) {
+  if (!silent) setStatus('检测硬件中...');
+  try {
+    const data = await apiGet('/finetune/auto-detect');
+    const hw = data.hardware||{}, rec = data.recommended||{};
+    const card = document.getElementById('ftHardwareCard');
+    const info = document.getElementById('ftHardwareInfo');
+    if (card && info) {
+      card.style.display = 'block';
+      info.innerHTML = `
+        <div class="grid-2" style="margin-bottom:8px">
+          <div><strong>GPU:</strong> ${esc(hw.gpu_name||'未检测到')}</div>
+          <div><strong>显存:</strong> ${hw.vram_gb||0} GB</div>
+          <div><strong>CUDA:</strong> ${esc(hw.cuda_version||'N/A')}</div>
+          <div><strong>内存:</strong> ${hw.cpu_ram_gb||'?'} GB</div>
+        </div>
+        <div style="color:var(--accent);font-size:12px">${esc(rec.quantization_note||'')} | ${esc(rec.dtype_note||'')}</div>`;
+    }
+    function set(id, val) { const el=document.getElementById(id); if(el&&val!==undefined&&val!=='') el.value=val; }
+    set('ftBatch', rec.batch_size); set('ftGradAccum', rec.gradient_accumulation);
+    set('ftCutoffLen', rec.cutoff_len); set('ftRank', rec.lora_rank);
+    set('ftQuant', rec.quantization_bit||'4');
+    if (rec.dtype) set('ftBf16', rec.dtype==='bfloat16'?'true':'false');
+    set('ftWarmup', rec.warmup_ratio); set('ftLRScheduler', rec.lr_scheduler);
+    set('ftValSize', rec.validation_size);
+    if (!silent) { toast(`检测完成: ${hw.gpu_name||'无GPU'}, ${hw.vram_gb||0}GB VRAM`, 'success'); setStatus('就绪'); }
+  } catch(e) { if (!silent) { toast('检测失败: '+e.message, 'error'); setStatus('检测失败'); } }
+}
+
+async function genFtConfig() {
+  const data = await apiPost('/finetune/gen-config', ftParams());
+  if (data.success) {
+    toast('配置已生成: '+data.config_path, 'success');
+    document.getElementById('ftLog').textContent = '── 训练配置 ──\n' + JSON.stringify(data.config, null, 2);
+  } else toast(data.error||'生成失败', 'error');
+}
+
+async function preprocessData() {
+  document.getElementById('ftLog').textContent = '正在预处理数据集 — 将原始 JSON 转换为 .arrow 缓存...\n';
+  document.getElementById('ftPreprocessBtn').disabled = true;
+  document.getElementById('ftStartBtn').disabled = true;
+  document.getElementById('ftStopBtn').disabled = true;
+  document.getElementById('ftRunningBadge').style.display = 'inline-flex';
+  document.getElementById('ftRunningBadge').className = 'status-badge warn';
+  document.getElementById('ftRunningBadge').textContent = '预处理中...';
+  setStatus('预处理数据中...');
+  const data = await apiPost('/finetune/preprocess', ftParams());
+  if (data.error) {
+    toast(data.error, 'error');
+    setStatus('预处理失败');
+    document.getElementById('ftPreprocessBtn').disabled = false;
+    document.getElementById('ftStartBtn').disabled = false;
+    document.getElementById('ftStopBtn').disabled = true;
+    document.getElementById('ftRunningBadge').style.display = 'none';
+    return;
+  }
+  toast(`预处理完成! 缓存路径: ${data.tokenized_path}`, 'success');
+  setStatus('预处理完成 — 可以开始训练');
+  document.getElementById('ftPreprocessBtn').disabled = false;
+  document.getElementById('ftStartBtn').disabled = false;
+  document.getElementById('ftStopBtn').disabled = true;
+  document.getElementById('ftRunningBadge').style.display = 'none';
+}
+
+async function startTraining() {
+  document.getElementById('ftLog').textContent = '';
+  const data = await apiPost('/finetune/start', ftParams());
+  if (data.error) { toast(data.error, 'error'); return; }
+  trainingRunning = true;
+  document.getElementById('ftPreprocessBtn').disabled = true;
+  document.getElementById('ftStartBtn').disabled = true;
+  document.getElementById('ftStopBtn').disabled = false;
+  document.getElementById('ftRunningBadge').style.display = 'inline-flex';
+  document.getElementById('ftRunningBadge').className = 'status-badge ok';
+  document.getElementById('ftRunningBadge').textContent = '训练运行中';
+  setStatus('训练中...');
+  toast('训练已启动', 'success');
+}
+
+async function stopTraining() {
+  const data = await apiPost('/finetune/stop');
+  if (data.error) { toast(data.error, 'error'); return; }
+  trainingRunning = false;
+  document.getElementById('ftPreprocessBtn').disabled = false;
+  document.getElementById('ftStartBtn').disabled = false;
+  document.getElementById('ftStopBtn').disabled = true;
+  document.getElementById('ftRunningBadge').style.display = 'none';
+  setStatus('训练已停止');
+  toast('训练已停止', 'info');
+}
+
+// ═══════════════════════════════════════════
+// PANEL: 模型对话
+// ═══════════════════════════════════════════
+let chatHistory = [];
+let _chatGenerating = false;
+
+async function renderChat(content, actions) {
+  let models = {models:[], loaded:[], active:null, base_model:''};
+  try { models = await apiGet('/chat/models'); } catch(e) {}
+  const loaded = models.active;
+  const loras = (models.models||[]).filter(m=>m.path);
+  content.innerHTML = `
+    <div class="chat-model-bar">
+      <span style="font-weight:600;color:var(--text)">模型</span>
+      <input id="chatModel" value="${esc(models.base_model||'')}" style="width:240px;height:30px;font-size:12px;padding:4px 8px" title="基础模型路径">
+      <span class="divider"></span>
+      <span style="color:var(--text-muted);white-space:nowrap">+ LoRA</span>
+      <select id="chatLora" style="width:180px;height:30px;font-size:12px;padding:4px 8px">
+        <option value="">(基础模型)</option>
+        ${loras.map(m=>`<option value="${esc(m.path||'')}" ${m.path===models.active?'selected':''}>${esc(m.name)}</option>`).join('')}
+      </select>
+      <button class="btn small" onclick="refreshChatModels()" title="刷新">↻</button>
+    </div>
+    <div class="chat-gen-bar">
+      <span style="font-weight:500;color:var(--text-secondary);font-size:12px;margin-right:8px">生成参数</span>
+      <label style="font-size:11px;color:var(--text-muted);margin-right:2px">max_tokens</label>
+      <input id="chatMaxTokens" value="256" style="width:55px;height:26px;font-size:11px;padding:2px 4px" type="number" min="1" max="4096" title="最大生成长度">
+      <label style="font-size:11px;color:var(--text-muted);margin-right:2px;margin-left:8px">temp</label>
+      <input id="chatTemp" value="0.9" style="width:50px;height:26px;font-size:11px;padding:2px 4px" step="0.01" title="温度 (0-2)">
+      <label style="font-size:11px;color:var(--text-muted);margin-right:2px;margin-left:8px">top_p</label>
+      <input id="chatTopP" value="0.95" style="width:50px;height:26px;font-size:11px;padding:2px 4px" step="0.01" title="核采样">
+      <label style="font-size:11px;color:var(--text-muted);margin-right:2px;margin-left:8px">top_k</label>
+      <input id="chatTopK" value="50" style="width:45px;height:26px;font-size:11px;padding:2px 4px" type="number" title="Top-K 筛选">
+      <label style="font-size:11px;color:var(--text-muted);margin-right:2px;margin-left:8px">rep_pen</label>
+      <input id="chatRepPen" value="1.15" style="width:50px;height:26px;font-size:11px;padding:2px 4px" step="0.01" title="重复惩罚">
+      <label style="font-size:11px;color:var(--text-muted);margin-right:2px;margin-left:8px">do_sample</label>
+      <select id="chatDoSample" style="width:55px;height:26px;font-size:11px;padding:2px"><option value="true">True</option><option value="false">False</option></select>
+      <label style="font-size:11px;color:var(--text-muted);margin-right:2px;margin-left:8px">beams</label>
+      <input id="chatBeams" value="1" style="width:40px;height:26px;font-size:11px;padding:2px 4px" type="number" min="1" max="10">
+      <label style="font-size:11px;color:var(--text-muted);margin-right:2px;margin-left:8px">sys_prompt</label>
+      <input id="chatSysPrompt" value="" style="flex:1;min-width:120px;height:26px;font-size:11px;padding:2px 6px" placeholder="(留空=自动加载训练人设)" title="自定义 System Prompt">
+    </div>
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="chat-header-avatar ${loaded?'active':'idle'}">${loaded?'🤖':'💤'}</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name">${loaded ? esc(models.active) : '未加载模型'}</div>
+          <div class="chat-header-status ${loaded?'online':'offline'}" id="chatStatus">${loaded?'在线 · 可以开始对话':'请先加载模型'}</div>
+        </div>
+        <div class="chat-header-actions">
+          ${loaded ? `<button class="btn small danger" onclick="unloadChatModel()">卸载</button>` : ''}
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-empty-state">
+          <div class="chat-empty-icon">${loaded?'💬':'🤖'}</div>
+          <div class="chat-empty-title">${loaded?'开始对话吧':'加载模型后开始对话'}</div>
+          <div class="chat-empty-desc">${loaded?'输入你的消息，AI 会根据微调的人设回复你':'从上方选择基础模型和 LoRA 适配器，点击操作栏的加载按钮'}</div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <textarea id="chatInput" placeholder="${loaded?'输入消息...':'请先加载模型...'}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}" ${loaded?'':'disabled'}></textarea>
+        <button class="btn accent btn-send" onclick="sendChat()" ${loaded?'':'disabled'} style="font-size:20px">➤</button>
+      </div>
+    </div>`;
+  actions.innerHTML = `
+    <button class="btn" onclick="autoDetectGenParams()">自动检测配置</button>
+    <button class="btn accent" onclick="loadChatModel()">加载基础模型</button>
+    <button class="btn" onclick="loadSelectedModel()">加载 LoRA 模型</button>
+    <button class="btn danger" onclick="unloadChatModel()">卸载模型</button>`;
+  if (chatHistory.length > 0) {
+    const msgsEl = document.getElementById('chatMessages');
+    if (msgsEl) { msgsEl.innerHTML = ''; chatHistory.forEach(m => addChatBubble(m.role, m.role==='user'?'你':'呓', m.content)); }
+  }
+}
+
+async function addChatBubble(role, sender, text) {
+  const msgs = document.getElementById('chatMessages');
+  if (!msgs) return;
+  // Remove empty state
+  const empty = msgs.querySelector('.chat-empty-state');
+  if (empty) empty.remove();
+  const div = document.createElement('div');
+  div.className = `chat-msg ${role}`;
+  const avatarLabel = role === 'user' ? '我' : '呓';
+  const avatarClass = role === 'user' ? 'user' : 'assistant';
+  if (role === 'system') {
+    div.innerHTML = `<div class="bubble system">${esc(text)}</div>`;
+  } else {
+    div.innerHTML = `
+      <div class="chat-avatar ${avatarClass}">${avatarLabel}</div>
+      <div class="bubble ${role}">${esc(text)}</div>`;
+  }
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chatMessages');
+  if (!msgs) return;
+  const empty = msgs.querySelector('.chat-empty-state');
+  if (empty) empty.remove();
+  const div = document.createElement('div');
+  div.className = 'chat-msg assistant';
+  div.id = 'typingMsg';
+  div.innerHTML = `
+    <div class="chat-avatar assistant">AI</div>
+    <div class="bubble assistant typing-indicator">
+      <span></span><span></span><span></span>
+    </div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function hideTyping() {
+  const el = document.getElementById('typingMsg');
+  if (el) el.remove();
+}
+
+function updateChatStatus(text, cls) {
+  const st = document.getElementById('chatStatus');
+  if (st) { st.textContent = text; st.className = 'chat-header-status ' + (cls||'online'); }
+}
+
+function updateChatHeader(loaded) {
+  const avatar = document.querySelector('.chat-header-avatar');
+  const name = document.querySelector('.chat-header-name');
+  if (avatar) { avatar.className = 'chat-header-avatar ' + (loaded?'active':'idle'); avatar.textContent = loaded?'🤖':'💤'; }
+  if (name) name.textContent = loaded ? '模型已加载' : '未加载模型';
+  updateChatStatus(loaded ? '在线 · 可以开始对话' : '请先加载模型', loaded ? 'online' : 'offline');
+}
+
+function chatGenParams() {
+  return {
+    max_new_tokens: _elVal('chatMaxTokens'), temperature: _elVal('chatTemp'),
+    top_p: _elVal('chatTopP'), top_k: _elVal('chatTopK'),
+    repetition_penalty: _elVal('chatRepPen'), do_sample: _elVal('chatDoSample'),
+    num_beams: _elVal('chatBeams'), system_prompt: _elVal('chatSysPrompt'),
+  };
+}
+
+async function autoDetectGenParams() {
+  try {
+    const data = await apiGet('/chat/auto-detect');
+    const rec = data.recommended || {};
+    const hw = data.hardware || {};
+    function set(id, val) { const el = document.getElementById(id); if (el && val !== undefined && val !== '') el.value = val; }
+    set('chatMaxTokens', rec.max_new_tokens);
+    set('chatTemp', rec.temperature);
+    set('chatTopP', rec.top_p);
+    set('chatTopK', rec.top_k);
+    set('chatRepPen', rec.repetition_penalty);
+    set('chatDoSample', rec.do_sample ? 'true' : 'false');
+    set('chatBeams', rec.num_beams);
+    const notes = (data.notes || []).join(' | ');
+    toast(`已应用推荐配置 · ${hw.gpu_name||'无GPU'} (${hw.vram_gb||0}GB) · ${notes}`, 'success');
+  } catch(e) {
+    toast('检测失败: ' + e.message, 'error');
+  }
+}
+
+async function loadChatModel() {
+  const modelPath = document.getElementById('chatModel').value;
+  if (!modelPath) { toast('请指定模型路径', 'error'); return; }
+  updateChatStatus('正在加载模型...', 'generating');
+  const name = modelPath.split(/[\\/]/).pop();
+  const data = await apiPost('/chat/load', Object.assign({model_path:modelPath, cache_name:name}, chatGenParams()));
+  if (data.success) { toast('模型已加载', 'success'); refreshCurrentPanel(); }
+  else { toast(data.error||'加载失败', 'error'); updateChatStatus('加载失败', 'offline'); }
+}
+
+async function loadSelectedModel() {
+  const lora = document.getElementById('chatLora').value;
+  const modelPath = document.getElementById('chatModel').value;
+  if (!modelPath) { toast('请指定模型路径', 'error'); return; }
+  if (!lora) return loadChatModel();
+  updateChatStatus('正在加载模型 + LoRA...', 'generating');
+  const name = lora.split(/[\\/]/).pop();
+  const data = await apiPost('/chat/load', Object.assign({model_path:modelPath, adapter_path:lora, cache_name:name}, chatGenParams()));
+  if (data.success) { toast('模型已加载', 'success'); refreshCurrentPanel(); }
+  else { toast(data.error||'加载失败', 'error'); updateChatStatus('加载失败', 'offline'); }
+}
+
+async function sendChat() {
+  if (_chatGenerating) return;
+  const msg = document.getElementById('chatInput').value.trim();
+  if (!msg) return;
+  try { const m = await apiGet('/chat/models'); if (!m.active) { toast('请先加载模型','error'); return; } } catch(e) {}
+  _chatGenerating = true;
+  addChatBubble('user', '你', msg);
+  document.getElementById('chatInput').value = '';
+  document.getElementById('chatInput').disabled = true;
+  showTyping();
+  updateChatStatus('对方正在输入...', 'generating');
+  try {
+    const data = await apiPost('/chat/send', {message:msg});
+    hideTyping();
+    if (data.error) {
+      addChatBubble('system', '错误', data.error);
+      updateChatStatus('发送失败', 'offline');
+    } else {
+      addChatBubble('assistant', '呓', data.response);
+      updateChatStatus('在线 · 可以继续对话', 'online');
+    }
+  } catch(e) { hideTyping(); addChatBubble('system', '错误', '网络异常'); updateChatStatus('连接断开', 'offline'); }
+  _chatGenerating = false;
+  document.getElementById('chatInput').disabled = false;
+  document.getElementById('chatInput').focus();
+}
+
+async function unloadChatModel() {
+  const data = await apiPost('/chat/unload');
+  if (data.success) { chatHistory = []; toast('模型已卸载', 'info'); }
+  else toast(data.error||'卸载失败', 'error');
+  refreshCurrentPanel();
+}
+
+function refreshChatModels() { refreshCurrentPanel(); }
+
+// ═══════════════════════════════════════════
+// PANEL: 系统状态
+// ═══════════════════════════════════════════
+async function renderSystem(content, actions) {
+  content.innerHTML = `<div class="stats-grid" id="sysStats"><div class="stat-card"><div class="label">加载中...</div></div></div>
+    <div class="stats-grid" id="statusGrid" style="margin-top:8px"></div>
+    <div class="card" style="margin-top:14px"><h3>GPU 信息</h3><div class="console" id="gpuInfo" style="min-height:120px">加载中...</div></div>`;
+  actions.innerHTML = `<button class="btn accent" onclick="refreshSystem()">刷新</button>`;
+  refreshSystem();
+}
+
+async function refreshSystem() {
+  try {
+    const data = await apiGet('/system/stats');
+    const stats = document.getElementById('sysStats');
+    const cpu = data.cpu||{}, ram = data.ram||{}, disk = data.disk||{};
+    stats.innerHTML = `
+      <div class="stat-card"><div class="label">CPU 使用率</div><div class="value">${cpu.percent||0}%</div><div class="detail">${cpu.cores||'?'} cores</div><div class="progress-bar" style="margin-top:12px"><div class="fill" style="width:${cpu.percent||0}%"></div></div></div>
+      <div class="stat-card"><div class="label">内存使用率</div><div class="value">${ram.percent||0}%</div><div class="detail">${ram.used_gb||0}GB / ${ram.total_gb||0}GB</div><div class="progress-bar" style="margin-top:12px"><div class="fill" style="width:${ram.percent||0}%"></div></div></div>
+      <div class="stat-card"><div class="label">磁盘使用率</div><div class="value">${disk.percent||0}%</div><div class="detail">${disk.used_gb||0}GB / ${disk.total_gb||0}GB</div><div class="progress-bar" style="margin-top:12px"><div class="fill" style="width:${disk.percent||0}%"></div></div></div>`;
+    const grid = document.getElementById('statusGrid');
+    grid.innerHTML = `
+      <div class="stat-card"><div class="label">训练状态</div><div class="value" style="font-size:16px">${data.training_running?'训练中':'空闲'}</div></div>
+      <div class="stat-card"><div class="label">模型状态</div><div class="value" style="font-size:16px">${data.model_loaded?esc(data.active_model||'已加载'):'未加载'}</div></div>`;
+    const gpu = document.getElementById('gpuInfo');
+    const g = data.gpu||{};
+    if (g.cuda_available) {
+      let txt = `CUDA 可用: 是\nCUDA 版本: ${g.cuda_version}\nGPU 数量: ${g.device_count}\n`;
+      (g.devices||[]).forEach(d => {
+        txt += `\nGPU ${d.id}: ${d.name}\n  显存: ${d.memory_total_mb} MB\n  计算能力: ${d.compute_capability}\n  已用显存: ${d.memory_used_mb} MB / ${d.memory_total_mb} MB\n`;
+      });
+      gpu.textContent = txt;
+    } else if (g.error) {
+      gpu.textContent = `GPU 检测失败: ${g.error}`;
+    } else {
+      gpu.textContent = 'CUDA 不可用';
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════
+// PANEL: 日志查看
+// ═══════════════════════════════════════════
+async function renderLogs(content, actions) {
+  let logs = {logs:[]};
+  try { logs = await apiGet('/logs'); } catch(e) {}
+  content.innerHTML = `
+    <div class="card"><h3>日志文件</h3>
+      <div class="flex-between gap-8">
+        <select id="logSelect" style="flex:1;max-width:500px">${(logs.logs||[]).length === 0 ? '<option>没有日志文件</option>' : (logs.logs||[]).map(l=>`<option value="${esc(l.name)}">${esc(l.name)} (${(l.size/1024).toFixed(1)}KB) — ${esc(l.modified||'')}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="card"><h3>日志内容</h3><div class="console" id="logContent" style="min-height:350px">选择日志文件后点击「加载日志」</div></div>`;
+  actions.innerHTML = `
+    <button class="btn accent" onclick="loadLog()">加载日志</button>
+    <button class="btn" onclick="refreshCurrentPanel()">刷新列表</button>
+    <button class="btn" onclick="document.getElementById('logContent').textContent='选择日志文件后点击「加载日志」'">清空显示</button>`;
+}
+
+async function loadLog() {
+  const sel = document.getElementById('logSelect');
+  const name = sel.value;
+  if (!name) { toast('请选择日志文件', 'error'); return; }
+  const data = await apiGet('/logs/get?name='+encodeURIComponent(name));
+  const el = document.getElementById('logContent');
+  if (data.error) { el.textContent = 'Error: '+data.error; return; }
+  el.textContent = `── ${name} (共 ${data.total_lines} 行, 显示最后 300 行) ──\n\n` + data.content;
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── SSE Events ──
+function initSSE() {
+  if (eventSource) { try { eventSource.close(); } catch(e) {} }
+  eventSource = new EventSource(API + '/events');
+  eventSource.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      // Batch training log (new, throttled)
+      if (msg.type === 'training_log_batch') {
+        const log = document.getElementById('ftLog');
+        if (log && (msg.data.lines||[]).length > 0) {
+          const wasAtBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+          log.textContent += msg.data.lines.join('\n') + '\n';
+          if (log.textContent.length > 50000) {
+            log.textContent = '...(trimmed)...\n' + log.textContent.slice(-30000);
+          }
+          if (wasAtBottom) log.scrollTop = log.scrollHeight;
+        }
+      }
+      // Legacy single-line training log
+      if (msg.type === 'training_log') {
+        const log = document.getElementById('ftLog');
+        if (log) {
+          const wasAtBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+          log.textContent += msg.data.line + '\n';
+          if (log.textContent.length > 50000) {
+            log.textContent = '...(trimmed)...\n' + log.textContent.slice(-30000);
+          }
+          if (wasAtBottom) log.scrollTop = log.scrollHeight;
+        }
+      }
+      if (msg.type === 'training_started') {
+        trainingRunning = true;
+        setStatus('训练中...');
+        updateFtButtons(true);
+      }
+      if (msg.type === 'training_done') {
+        trainingRunning = false;
+        updateFtButtons(false);
+        setStatus(msg.data.returncode===0?'训练完成':'训练异常');
+        toast(msg.data.returncode===0?'训练完成!':'训练异常退出, 返回码: '+msg.data.returncode, msg.data.returncode===0?'success':'error');
+      }
+      if (msg.type === 'model_loaded' || msg.type === 'model_switched') {
+        setStatus(`模型: ${msg.data.name}`);
+        if (currentPanel === 'chat') {
+          try { refreshCurrentPanel(); } catch(_) {}
+        }
+      }
+      if (msg.type === 'model_unloaded') {
+        setStatus('就绪');
+        if (currentPanel === 'chat') {
+          try { refreshCurrentPanel(); } catch(_) {}
+        }
+      }
+    } catch(_) {}
+  };
+  eventSource.onerror = () => { setTimeout(initSSE, 5000); };
+}
+
+function updateFtButtons(running) {
+  const preBtn = document.getElementById('ftPreprocessBtn');
+  const startBtn = document.getElementById('ftStartBtn');
+  const stopBtn = document.getElementById('ftStopBtn');
+  const badge = document.getElementById('ftRunningBadge');
+  if (preBtn) preBtn.disabled = running;
+  if (startBtn) startBtn.disabled = running;
+  if (stopBtn) stopBtn.disabled = !running;
+  if (badge) {
+    if (running) {
+      badge.style.display = 'inline-flex';
+      badge.className = 'status-badge ok';
+      badge.textContent = '训练运行中';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+}
+
+// Poll training status when returning to finetune tab
+setInterval(() => {
+  if (currentPanel === 'finetune' && trainingRunning) {
+    apiGet('/finetune/status').then(st => {
+      if (!st.running && trainingRunning) {
+        trainingRunning = false;
+        updateFtButtons(false);
+        setStatus('训练结束');
+      }
+    }).catch(() => {});
+  }
+}, 3000);
+
+// ── Status ──
+function setStatus(msg) {
+  document.getElementById('statusText').textContent = msg;
+}
+
+function esc(s) {
+  if (typeof s !== 'string') return s;
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──
+initSSE();
+renderPanel('env');
+
+// Auto-refresh system status
+setInterval(() => { if (currentPanel === 'system') refreshSystem(); }, 5000);
+</script>
+</body>
+</html>

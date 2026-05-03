@@ -1,0 +1,60 @@
+# 大模型文件 (~18GB)
+models/
+*.safetensors
+*.bin
+*.ckpt
+*.pth
+
+# 便携 Python 环境 (~3GB)
+pytorch-env/
+ai-env/
+
+# 第三方工具
+MemoTrace.exe
+
+# 用户数据（含隐私）
+data/emoji/
+data/files/
+data/image/
+data/music/
+data/聊天记录/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# 日志
+logs/
+*.log
+
+# 模型训练输出
+LLaMA-Factory/output/
+LLaMA-Factory/data/tokenized/
+
+# 临时/上传文件
+tmp/
+tmp_req.json
+DumpStack.log.tmp
+
+# 系统
+.DS_Store
+Thumbs.db
+$RECYCLE.BIN/
+System Volume Information/
+Desktop.ini
+*.lnk
+
+# IDE
+.idea/
+.vscode/
+
+# 压缩包/安装包
+*.zip
+*.whl
+
+# 运行时配置（本地路径不同）
+toolbox_config.json
+app/DataBase/
+app/data/
